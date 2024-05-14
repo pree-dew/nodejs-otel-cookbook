@@ -1,0 +1,74 @@
+version: '3.7'
+services:
+  myapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - "OTLP_COLLECTOR_HOST_ADDRESS=${OTLP_COLLECTOR_HOST_ADDRESS}"
+      - "APPLICATION_PORT=8081"
+    ports:
+      - "8081:8081"
+
+  otel-collector-1:
+    container_name: otel-collector-1
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    environment:
+      - REMOTE_WRITE_URL=${REMOTE_WRITE_URL}
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317"  # OTLP grpc receiver
+
+  otel-collector-2:
+    container_name: otel-collector-2
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    environment:
+      - REMOTE_WRITE_URL=${REMOTE_WRITE_URL}
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317"   # OTLP grpc receiver
+
+  otel-collector-3:
+    container_name: otel-collector-3
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    environment:
+      - REMOTE_WRITE_URL=${REMOTE_WRITE_URL}
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317"   # OTLP grpc receiver
+
+  # Otel gateway (running loadbalacing exporter)
+  otel-gateway:
+    container_name: otel-gateway
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-gateway-config.yaml"]
+    volumes:
+      - ./otel-gateway-config.yaml:/etc/otel-gateway-config.yaml
+    ports:
+      - "4317:4317"        # OTLP http receiver
+    depends_on:
+      - otel-collector-1
+      - otel-collector-2
+      - otel-collector-3
+
+  victoriametrics:
+    container_name: victoriametrics
+    image: victoriametrics/victoria-metrics
+    ports:
+      - "8439:8429"
+    volumes:
+      - victoriametricsdata:/victoriametricsdata
+    command:
+      - "-storageDataPath=/victoriametricsdata"
+      - "-retentionPeriod=30"
+      - "-httpListenAddr=:8429"
+    restart: always
+
+volumes:
+  victoriametricsdata: { }

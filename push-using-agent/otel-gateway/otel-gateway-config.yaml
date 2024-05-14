@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4317
+
+processors:
+
+exporters:
+  debug:
+    verbosity: detailed
+  loadbalancing:
+    protocol:
+      otlp:
+        timeout: 5s
+        tls:
+          insecure: true
+    resolver:
+      static:
+        hostnames:
+          - otel-collector-1:4317
+          - otel-collector-2:4317
+          - otel-collector-3:4317
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: []
+      exporters: [debug, loadbalancing]
