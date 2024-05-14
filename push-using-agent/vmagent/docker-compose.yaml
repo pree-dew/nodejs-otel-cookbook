@@ -1,0 +1,45 @@
+version: '3.7'
+services:
+  myapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - "OTLP_COLLECTOR_HOST_ADDRESS=${OTLP_COLLECTOR_HOST_ADDRESS}"
+      - "OTLP_COLLECTOR_RESOURCE_PATH=${OTLP_COLLECTOR_RESOURCE_PATH}"
+      - "APPLICATION_PORT=8081"
+    ports:
+      - "8081:8081"
+
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent
+    ports:
+      - "8429:8429"
+    volumes:
+      - vmagentdata:/vmagentdata
+      - /var/tmp:/var/tmp
+      - ./vmagent.yaml:/etc/vmagent.yaml
+    command:
+      - "--promscrape.config=/etc/vmagent.yaml"
+      - "--remoteWrite.tmpDataPath=/var/tmp/vmagent/"
+      - "--remoteWrite.maxDiskUsagePerURL=10737418240"
+      - "--remoteWrite.url=${REMOTE_WRITE_URL}"
+    restart: always
+
+  victoriametrics:
+    container_name: victoriametrics
+    image: victoriametrics/victoria-metrics
+    ports:
+      - "8439:8429"
+    volumes:
+      - victoriametricsdata:/victoriametricsdata
+    command:
+      - "-storageDataPath=/victoriametricsdata"
+      - "-retentionPeriod=30"
+      - "-httpListenAddr=:8429"
+    restart: always
+
+volumes:
+  vmagentdata: { }
+  victoriametricsdata: { }
