@@ -1,0 +1,19 @@
+receivers:
+  otlp: # the OTLP receiver the app is sending metrics to
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+
+exporters:
+  otlphttp:
+    metrics_endpoint: "http://vmagent:8429/opentelemetry/api/v1/push"
+
+service:
+  pipelines:
+    metrics/prod:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
