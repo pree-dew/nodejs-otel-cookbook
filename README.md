@@ -1,4 +1,4 @@
-### nodejs-otel-cookbooks
+### nodejs-otel-cookbook
 
 This repo describes recipes for pushing instrumented code metrics via OTel to a backend.
 The aim of this repo is to showcase the flexibility of OTel metric ingestion pipeline
