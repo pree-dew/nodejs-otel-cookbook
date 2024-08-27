@@ -4,8 +4,8 @@ const express = require('express');
 const {v4: uuidv4} = require('uuid');
 
 const {DiagConsoleLogger, DiagLogLevel, ValueType, diag} = require('@opentelemetry/api');
-const {OTLPMetricExporter} = require('@opentelemetry/exporter-metrics-otlp-proto');
-
+const {OTLPMetricExporter, ConsoleMetricExporter} = require('@opentelemetry/exporter-metrics-otlp-proto');
+const {ConsoleMetricReader} = require('@opentelemetry/sdk-metrics-base');
 const {
   ExponentialHistogramAggregation, MeterProvider, PeriodicExportingMetricReader, View,
 } = require('@opentelemetry/sdk-metrics');
@@ -39,6 +39,7 @@ const meterProvider = new MeterProvider({
   }),
 });
 
+
 meterProvider.addMetricReader(new PeriodicExportingMetricReader({
   exporter: metricExporter, // exporter: new ConsoleMetricExporter(),
   exportIntervalMillis: 10000,
@@ -51,12 +52,16 @@ const meter = meterProvider.getMeter('example-meter');
 // Create a histogram
 const requestsLatency = meter.createHistogram("http_request_duration_second", {
   description: "Latency of a service",
+  advice: {
+	explicitBucketBoundaries: [0.1, 1, 5, 10, 25, 50, 100, 250, 500, 1000],
+  },
 });
 
 // Create a counter
 const requestsCount = meter.createCounter("http_requests_total", {
-  description: "Throughput of a service",
+  description: "Throughput of a service", 
 });
+
 
 // Create an updown counter
 const activeRequests = meter.createUpDownCounter("http_active_requests", {
